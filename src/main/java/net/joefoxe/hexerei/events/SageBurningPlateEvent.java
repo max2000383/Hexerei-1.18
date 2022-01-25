@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,6 +26,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import java.util.List;
+import com.google.common.base.Predicates;
 
 @EventBusSubscriber
 public class SageBurningPlateEvent {
@@ -53,17 +55,23 @@ public class SageBurningPlateEvent {
             return;
         }
 
-        List<BlockPos> nearbySageBurningPlates = HexereiUtil.getAllTileEntityPositionsNearby(ModTileEntities.SAGE_BURNING_PLATE_TILE.get(), HexConfig.SAGE_BURNING_PLATE_RANGE.get() + 1, world, entity);
+        if(HexConfig.SAGE_BURNING_PLATE_RANGE.get()==0)return;
+        //List<BlockPos> nearbySageBurningPlates = HexereiUtil.getAllTileEntityPositionsNearby(ModTileEntities.SAGE_BURNING_PLATE_TILE.get(), HexConfig.SAGE_BURNING_PLATE_RANGE.get() + 1, world, entity);
 
-        if (nearbySageBurningPlates.size() == 0) {
+        List<Entity> nearbySageBurningPlateEntities =world.getEntities(entity,new AABB(entity.blockPosition()).inflate(HexConfig.SAGE_BURNING_PLATE_RANGE.get()),Predicates.instanceOf(ModTileEntities.SAGE_BURNING_PLATE_TILE.get().getClass()));
+        //e.getClass(),new TargetingCondition(),new AABB(entity.blockPosition()).inflate(HexConfig.SAGE_BURNING_PLATE_RANGE.get())
+        //world.getEntities(entity, new AABB(entity.blockPosition()).inflate(HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
+        //List<BlockEntity> nearbySageBurningPlateEntities = world.getEntitiesWithinAABB(Entity.class, new AABB(entity.blockPosition()).inflate(HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
+        //, Predicates.instanceOf(Entity.class)
+        if (nearbySageBurningPlateEntities.size() == 0) {
             return;
         }
 
         BlockPos burning_plate = null;
-        for (BlockPos nearbySageBurningPlate : nearbySageBurningPlates) {
-            BlockState burning_platestate = world.getBlockState(nearbySageBurningPlate);
+        for (Entity nearbySageBurningPlateEntity : nearbySageBurningPlateEntities) {
+            burning_plate = nearbySageBurningPlateEntity.blockPosition();
+            BlockState burning_platestate = world.getBlockState(burning_plate);
             Block block = burning_platestate.getBlock();
-            BlockEntity blockEntity = world.getBlockEntity(nearbySageBurningPlate);
             if(!burning_platestate.getValue(SageBurningPlate.LIT)) {
                 continue;
             }
@@ -71,7 +79,7 @@ public class SageBurningPlateEvent {
                 continue;
             }
 
-            burning_plate = nearbySageBurningPlate.immutable();
+            burning_plate = burning_plate.immutable();
             break;
         }
 
